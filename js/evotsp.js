@@ -1,10 +1,8 @@
 (function evoTSPwrapper($) {
-
     // You'll need to replace this with the URL you get when you
     // deploy your API Gateway.
-    const baseUrl = 'https://nh5gsos957.execute-api.us-east-1.amazonaws.com/prod/'
+    const baseUrl = 'https://3ql7p8ai1d.execute-api.us-east-1.amazonaws.com/EvoTSP/'
     console.log(`The base URL is ${baseUrl}.`);
-
     // Set up the functions to be called when the user clicks on any
     // of the three buttons in our (very simple) user interface.
     // We provided `randomRoutes()` for you, but you have to implement
@@ -14,7 +12,6 @@
         $('#get-best-routes').click(getBestRoutes);
         $('#get-route-by-id').click(getRouteById);
     });
-
     // This generates a single random route by POSTing the
     // runId and generation to the `/routes` endpoint.
     // It's asynchronous (like requests across the network
@@ -34,16 +31,15 @@
             success: showRoute,
             error: function ajaxError(jqXHR, textStatus, errorThrown) {
                 console.error(
-                    'Error generating random route: ', 
-                    textStatus, 
-                    ', Details: ', 
+                    'Error generating random route: ',
+                    textStatus,
+                    ', Details: ',
                     errorThrown);
                 console.error('Response: ', jqXHR.responseText);
                 alert('An error occurred when creating a random route:\n' + jqXHR.responseText);
             }
         })
     }
-
     // Generates a collection of new routes, where the number to generate
     // (and the runId and generation) are specified in the HTML text
     // fields. Note that we don't do any kind of sanity checking here, when
@@ -62,14 +58,13 @@
     function randomRoutes(event) {
         const runId = $('#runId-text-field').val();
         const generation = $('#generation-text-field').val();
-        const numToGenerate =$('#num-to-generate').val();
+        const numToGenerate = $('#num-to-generate').val();
         // Reset the contents of `#new-route-list` so that it's ready for
         // `showRoute()` to "fill" it with the incoming new routes. 
         $('#new-route-list').text('');
         // 
         async.times(numToGenerate, () => randomRoute(runId, generation));
     }
-
     // When a request for a new route is completed, add an `<li>…</li>` element
     // to `#new-route-list` with that routes information.
     function showRoute(result) {
@@ -78,7 +73,6 @@
         const length = result.length;
         $('#new-route-list').append(`<li>We generated route ${routeId} with length ${length}.</li>`);
     }
-
     // Make a `GET` request that gets the K best routes.
     // The form of the `GET` request is:
     //   …/best?runId=…&generation=…&numToReturn=…
@@ -87,9 +81,21 @@
     // You should add each of these to `#best-route-list`
     // (after clearing it first).
     function getBestRoutes(event) {
-        alert('You need to implement getBestRoutes()');
+        $('#best-route-list').text('');
+        const runId = $('#runId-text-field').val();
+        const numLimit = $('#num-best-to-get').val();
+        const generation = $('#generation-text-field').val();
+        $.ajax({
+            "method": "GET",
+            "url": baseUrl + `/best?runId=${runId}&generation=${generation}&numToReturn=${numLimit}`,
+        })
+            .done(function (result) {
+                for (let i = 0; i < result.length; i++) {
+                    $('#best-route-list').append(`<ol>${result[i]['length']} ${result[i]['routeId']}</ol>`);
+                }
+                console.log(result);
+            });
     }
-
     // Make a `GET` request that gets all the route information
     // for the given `routeId`.
     // The form of the `GET` request is:
@@ -97,8 +103,21 @@
     // This request will return a complete route JSON object.
     // You should display the returned information in 
     // `#route-by-id-elements` (after clearing it first).
-    function getRouteById() {
-        alert('You need to implement getRouteById()');
+    function getRouteById(event) {
+        $('#route-by-id-elements').text('');
+        const routeId = $('#route-ID').val();
+        console.log(routeId);
+        $.ajax({
+            "method": "GET",
+            "url": baseUrl + `/routes/${routeId}`,
+        })
+            .done(function (data) {
+                console.log(data);
+                $('#route-by-id-elements').append(`<ol>partitionKey: ${data[0]['partitionKey']}</ol>
+            <ol>routeId: ${data[0]['routeId']}</ol>
+            <ol>route: ${data[0]['route']}</ol>
+            <ol>length: ${data[0]['length']}</ol>`);
+            });
     }
-
-}(jQuery));
+}
+    (jQuery));
